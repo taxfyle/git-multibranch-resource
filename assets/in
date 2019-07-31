@@ -29,7 +29,8 @@ uri=$(jq -r '.source.uri // ""' < $payload)
 branch=$(jq -r '.source.branch // ""' < $payload)
 ref=$(jq -r '.version.ref // "HEAD"' < $payload)
 depth=$(jq -r '(.params.depth // 0)' < $payload)
-fetch=$(jq -r '(.params.fetch // [])[]' < $payload)
+fetch="$(jq -r '(.params.fetch // [])[]' < $payload)"
+fetch_tags="$(jq -r '.params.fetch_tags // false)' < $payload)"
 submodules=$(jq -r '(.params.submodules // "all")' < $payload)
 
 ## Redis stuff to support cleaner multibranch wait-for-previous behaviour
@@ -76,8 +77,14 @@ then
   depthflag="--depth $depth"
 fi
 
+tagFlag=""
+if [ "$fetch_tags" = "true" ]
+then
+  tagFlag="--tags"
+fi
+
 echo "Cloning: git clone ${single_branch_flag}$depthflag $uri $branchflag $destination"
-git clone ${single_branch_flag}${depthflag} $uri $branchflag $destination
+git clone ${single_branch_flag}${depthflag} $uri $branchflag $destination $tagFlag
 
 cd $destination
 
